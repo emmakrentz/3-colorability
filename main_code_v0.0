@@ -1,0 +1,120 @@
+def colorability(vertices):
+    '''Given a set of edges, determine whether or not its corresponding graph is 3-colorable.'''
+
+    '''From a given list of adjacencies, determine the individual vertices'''
+    print('Edges:', vertices)
+    number_vertices = []
+    for i in vertices:
+        first = i[0]
+        second = i[1]
+        number_vertices.append(first)
+        number_vertices.append(second)
+    for vertex in number_vertices:
+        while number_vertices.count(vertex) > 1:
+            number_vertices.remove(vertex)
+
+    '''Initial conditions: if 0->3 vertices, it is trivially colorable. If more than 3n-6 edges, it is not colorable.'''
+    if len(number_vertices) <= 3:
+        print('This graph is colorable.')
+    elif ((3 * len(number_vertices)) - 6) < len(vertices):
+        print('This graph is not colorable.')
+
+    '''Create list of possible colors, dictionary with assigned values of 3 meaning "not yet colored", and begin to color.'''
+    dict1 = {k: 3 for k in number_vertices}
+    v = sorted(list(dict1.keys()))
+    colors = ['red', 'green', 'blue'] * len(number_vertices)
+    dict1[v[0]] = colors[0]
+    for i in vertices:
+        if v[0] in i:
+            u = i.index(v[0])
+            dict1[i[1 - u]] = colors[1]
+    for k in vertices:
+        for a in range(1, len(v)):
+            if (v[a] in k) and dict1[k[1 - k.index(v[a])]] == 3:
+                u = k.index(v[a])
+                dict1[k[1 - u]] = colors[colors.index(dict1[k[u]]) + 1]
+
+    '''Now that we have an original coloring, we check if any adjacent vertices are the same color and begin to modify our coloring.'''
+    original_dict1 = dict1.copy()
+    dict2 = dict1.copy()
+    newdict = []
+    newdict.append(list(dict1.values()))
+    for i in vertices:
+        if dict1[i[0]] == dict1[i[1]] and dict1 == original_dict1:
+            dict1[i[1]] = colors[colors.index(dict1[i[1]]) + 1]
+            break
+    a = 0
+    steps = 0
+    while a in range(0, len(vertices)) and steps < (2 ** (len(number_vertices) + 10)):
+        for j in newdict:
+            steps += 1
+            if a >= len(vertices):
+                break
+            i = vertices[a]
+            if dict1[i[0]] == dict1[i[1]] and (list(dict1.values())) != j:
+                dict1[i[1]] = colors[colors.index(dict1[i[1]]) + 1]
+                a = 0
+                newdict.append(list(dict1.values()))
+                check = all(dict1[i[0]] != dict1[i[1]] for i in vertices)
+                if not check:
+                    continue
+                elif check:
+                    break
+            elif dict1[i[0]] == dict1[i[1]]:
+                dict1[i[0]] = colors[colors.index(dict1[i[0]]) + 1]
+                a = 0
+                newdict.append(list(dict1.values()))
+                check = all(dict1[i[0]] != dict1[i[1]] for i in vertices)
+                if check == False:
+                    continue
+                elif check == True:
+                    break
+            else:
+                a += 1
+
+    '''Now that we have a coloring that works, display it'''
+    colored_vertices = []
+    for i in range(0, len(vertices)):
+        for j in vertices[i]:
+            colored_vertices.append(dict1[j])
+    smaller_lists = [colored_vertices[x:x + 2] for x in range(0, len(colored_vertices), 2)]
+    smaller_tuples = []
+    for i in smaller_lists:
+        a = tuple(i)
+        smaller_tuples.append(a)
+    print('Colored edges:', smaller_tuples)
+    print('Coloring:', dict1)
+
+    '''Final check and print whether or not the graph is colorable'''
+    checking = []
+    for i in range(0, len(dict1)):
+        check = all(dict1[i[0]] != dict1[i[1]] for i in vertices)
+        if check == False:
+            checking.append(False)
+        elif check == True:
+            checking.append(True)
+    if False in checking:
+        print('This graph is not colorable.')
+    else:
+        print('This graph is colorable.')
+
+    print('Number of steps:', steps)
+
+    '''Draw and return my graph, with labels and correct (or optimal) coloring'''
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    graph = nx.Graph()
+    graph.add_nodes_from(number_vertices)
+    graph.add_edges_from(vertices)
+    color_list = []
+    color_map = dict1
+    for node in color_map:
+        color_list.append(color_map[node])
+    nx.draw(graph, node_color=color_list, with_labels=True)
+    plt.savefig("simple_path.png")
+    plt.show()
+
+'''Example graph:'''
+vertices = [('a', 'b'), ('b', 'c'), ('c', 'd'), ('a', 'd'), ('c', 'e'), ('a', 'f'), ('f', 'h'), ('b', 'f'),
+                ('c', 'f'), ('d', 'e'), ('c', 'g')]
+print(colorability(vertices))
